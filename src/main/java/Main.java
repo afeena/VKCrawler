@@ -1,8 +1,13 @@
+import users.Users;
+import wall.WallParser;
+
 /**
  * Created by afeena on 10.07.2015.
  */
 public class Main {
-    public static void main(String[] args){
+	public static void main(String[] args) throws Exception{
 
-    }
+		WallParser.init(1);
+		new Users();
+	}
 }

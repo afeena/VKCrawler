@@ -64,13 +64,18 @@ public class VkResponseParser {
 			for (int i = 1; i <= count; i++) {
 				JSONObject post = (JSONObject) response.get(i);
 				Iterator<String> keys = post.keySet().iterator();
+				String searched_key;
+				String post_type = post.get("post_type").toString();
+				if(post_type.equals("copy")) searched_key="copy_text";
+				else searched_key="text";
 				while (keys.hasNext()) {
 					String key = keys.next();
 
+
 					try {
 
-						if (key.equals("text")) {
-							String text = post.get("text").toString();
+						if (key.equals(searched_key)) {
+							String text = post.get(searched_key).toString();
 							result.add(text);
 							break;
 						}

@@ -1,5 +1,7 @@
-import users.Users;
-import wall.WallParser;
+package ru.afeena.crawler;
+
+import ru.afeena.crawler.users.Users;
+import ru.afeena.crawler.wall.WallParser;
 
 /**
  * Created by afeena on 10.07.2015.

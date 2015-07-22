@@ -1,9 +1,7 @@
-package wall;
+package ru.afeena.crawler.wall;
 
-import api.VkApi;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import ru.afeena.crawler.VkResponseParser;
+import ru.afeena.crawler.api.VkApi;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -14,7 +12,7 @@ public class WallParser implements Runnable {
 
 	public static ArrayList<WallParser> instances;
 	public static AtomicInteger current_thread = new AtomicInteger(0);
-	private JSONParser parser;
+
 	private ConcurrentLinkedQueue<WallTask> tasks;
 
 	public static void init(int thread_count) throws Exception {
@@ -40,7 +38,7 @@ public class WallParser implements Runnable {
 	}
 
 	private WallParser() {
-		parser = new JSONParser();
+
 		tasks = new ConcurrentLinkedQueue<WallTask>();
 
 	}
@@ -57,24 +55,13 @@ public class WallParser implements Runnable {
 				WallTask task = tasks.poll();
 
 				String wall = VkApi.getWall(task.getUid(), task.getOffset(), task.getCount());
-				JSONObject jsonObj;
-				JSONArray response;
 
-				try {
+				VkResponseParser parse = new VkResponseParser();
+				ArrayList<String> res = parse.parseWall(wall, task.getCount());
 
-					jsonObj = (JSONObject) parser.parse(wall);
-					response = (JSONArray) jsonObj.get("response");
-
-
-					for (int i = 1; i <= task.getCount(); i++) {
-						JSONObject post = (JSONObject) response.get(i);
-						String text = post.get("text").toString();
-						System.out.println(text);
-					}
-				} catch (org.json.simple.parser.ParseException e) {
-					System.out.println(e);
+				for (String elem : res) {
+					System.out.println(elem);
 				}
-
 
 			}
 		}

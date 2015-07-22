@@ -1,4 +1,4 @@
-package api;
+package ru.afeena.crawler.api;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +25,8 @@ public class VkApi {
 
 		return VkApi.connect(method_name, params);
 	}
-	public static String getSubscription(long uid,long offset,long count) {
+
+	public static String getSubscription(long uid, long offset, long count) {
 		String method_name = "users.getSubscriptions";
 
 		Map<String, String> params = new HashMap<String, String>();

@@ -1,4 +1,4 @@
-package exceptions;
+package ru.afeena.crawler.exceptions;
 
 /**
  * Created by mainn_000 on 20.07.2015.

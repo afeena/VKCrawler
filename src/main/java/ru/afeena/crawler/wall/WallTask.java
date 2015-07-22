@@ -1,4 +1,4 @@
-package wall;
+package ru.afeena.crawler.wall;
 
 public class WallTask {
 	private long uid;

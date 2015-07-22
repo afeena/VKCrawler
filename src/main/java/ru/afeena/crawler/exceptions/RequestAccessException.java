@@ -1,4 +1,4 @@
-package exceptions;
+package ru.afeena.crawler.exceptions;
 
 public class RequestAccessException extends Exception {
 	private long user;

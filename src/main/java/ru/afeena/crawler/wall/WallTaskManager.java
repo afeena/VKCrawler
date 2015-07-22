@@ -1,12 +1,11 @@
-package wall;
+package ru.afeena.crawler.wall;
 
-import api.VkApi;
-import exceptions.EmptyWallException;
-import exceptions.RequestAccessException;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import users.Users;
+
+import ru.afeena.crawler.VkResponseParser;
+import ru.afeena.crawler.api.VkApi;
+import ru.afeena.crawler.exceptions.EmptyWallException;
+import ru.afeena.crawler.exceptions.RequestAccessException;
+import ru.afeena.crawler.users.Users;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -16,11 +15,9 @@ public class WallTaskManager implements Runnable {
 	private static final int MAX_POST_COUNT = 100;
 	public static ConcurrentLinkedQueue<Long> unhandled_users = new ConcurrentLinkedQueue<Long>();
 
-	private JSONParser parser;
 
 	public WallTaskManager() {
 
-		parser = new JSONParser();
 
 	}
 
@@ -37,24 +34,18 @@ public class WallTaskManager implements Runnable {
 	private void usersExecute() {
 
 		while (!unhandled_users.isEmpty()) {
+			VkResponseParser parse = new VkResponseParser();
 			long uid = unhandled_users.poll();
 			String wall = VkApi.getWall(uid, 0, 1);
-
-			JSONObject jsonObj;
-			JSONArray response;
 			Long unread_post;
 			ArrayList<Long> offsets = new ArrayList<Long>();
+			Long posts_count = parse.postCount(wall);
 
 			try {
-
-				jsonObj = (JSONObject) parser.parse(wall);
-				if (jsonObj.containsKey("error")) throw new RequestAccessException(uid);
-				response = (JSONArray) jsonObj.get("response");
+				if (posts_count.equals(-1)) throw new RequestAccessException(uid);
+				if (posts_count.equals(0)) throw new EmptyWallException(uid);
 
 
-				if ( response.size()==1 ) throw new EmptyWallException(uid);
-
-				Long posts_count = (Long) response.get(0);
 				Users.handled_users.put(uid, posts_count.intValue());
 
 				unread_post = posts_count;
@@ -76,14 +67,13 @@ public class WallTaskManager implements Runnable {
 				}
 
 
-			} catch (EmptyWallException e){
-				Users.handled_users.put(uid,0);
-			}
-			catch (RequestAccessException e) {
+			} catch (EmptyWallException e) {
+				Users.handled_users.put(uid, 0);
+			} catch (RequestAccessException e) {
 				WallTaskManager.unhandled_users.remove(e.getUser());
 			} catch (Exception e) {
 
-				System.out.println("WallTaskManager"+e);
+				System.out.println("WallTaskManager" + e);
 			}
 
 

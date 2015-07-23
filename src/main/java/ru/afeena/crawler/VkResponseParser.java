@@ -3,15 +3,11 @@ package ru.afeena.crawler;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import ru.afeena.crawler.exceptions.EmptyWallException;
-import ru.afeena.crawler.exceptions.RequestAccessException;
 import ru.afeena.crawler.exceptions.ResponseError;
+import ru.afeena.crawler.wall.Post;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 
 public class VkResponseParser {
@@ -70,10 +66,10 @@ public class VkResponseParser {
 		return parsed_friend;
 	}
 
-	public ArrayList<String> parseWall(String wall, long count){
+	public ArrayList<Post> parseWall(String wall, long count){
 		JSONObject jsonObj;
 		JSONArray response;
-		ArrayList<String> result=new ArrayList<String>();
+		ArrayList<Post> result=new ArrayList<Post>();
 
 		try {
 
@@ -82,29 +78,23 @@ public class VkResponseParser {
 
 
 			for (int i = 1; i <= count; i++) {
-				JSONObject post = (JSONObject) response.get(i);
-				Iterator<String> keys = post.keySet().iterator();
+
+				JSONObject raw_post = (JSONObject) response.get(i);				
 				String searched_key;
-				String post_type = post.get("post_type").toString();
-				if(post_type.equals("copy")) searched_key="copy_text";
-				else searched_key="text";
-				while (keys.hasNext()) {
-					String key = keys.next();
+				String post_type = raw_post.get("post_type").toString();
+
+				if(post_type.equals("copy"))
+					searched_key="copy_text";
+				else
+					searched_key="text";
+
+				String text=raw_post.get(searched_key).toString();
+				long date=(Long)raw_post.get("date");
+
+				Post post = new Post(date,text);
+				result.add(post);
 
 
-					try {
-
-						if (key.equals(searched_key)) {
-							String text = post.get(searched_key).toString();
-							result.add(text);
-							break;
-						}
-					} catch (Exception e) {
-						System.out.println(e);
-					}
-
-
-				}
 			}
 
 		} catch (org.json.simple.parser.ParseException e) {

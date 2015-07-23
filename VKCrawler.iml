@@ -14,5 +14,10 @@
     <orderEntry type="library" name="com.sparkjava:spark-core:2.2" level="project" />
     <orderEntry type="library" name="junit:junit:4.12" level="project" />
     <orderEntry type="library" name="com.googlecode.json-simple:json-simple:1.1.1" level="project" />
+    <orderEntry type="library" name="org.mockito:mockito-core:1.9.5" level="project" />
+    <orderEntry type="library" name="org.powermock:powermock-api-mockito:1.6.2" level="project" />
+    <orderEntry type="library" name="org.powermock:powermock-module-junit4:1.6.2" level="project" />
+    <orderEntry type="library" name="org.mongodb:mongo-java-driver:3.0.3" level="project" />
+    <orderEntry type="library" name="org.mongodb:bson:2.13.0" level="project" />
   </component>
 </module>

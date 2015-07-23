@@ -31,9 +31,6 @@ public class Users {
 			getFriend(Users.unhandled_users.poll());
 		}
 
-
-
-
 	}
 
 	public void getFriend(long uid) {
@@ -57,5 +54,7 @@ public class Users {
 
 		}
 	}
+
+
 }
 

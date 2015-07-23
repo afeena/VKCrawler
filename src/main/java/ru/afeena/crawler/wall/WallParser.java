@@ -57,11 +57,11 @@ public class WallParser implements Runnable {
 				String wall = VkApi.getWall(task.getUid(), task.getOffset(), task.getCount());
 
 				VkResponseParser parse = new VkResponseParser();
-				ArrayList<String> res = parse.parseWall(wall, task.getCount());
+				ArrayList<Post> res = parse.parseWall(wall, task.getCount());
 
-				for (String elem : res) {
-					System.out.println(elem);
-				}
+//				for (String elem : res) {
+//					System.out.println(elem);
+//				}
 
 			}
 		}

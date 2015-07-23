@@ -2,7 +2,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import ru.afeena.crawler.VkResponseParser;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class VkResponseParserTest {
 
@@ -36,4 +38,22 @@ public class VkResponseParserTest {
 		//assert
 		Assert.assertEquals(expected_result, result);
 	}
+
+	@Test
+	public void friendListParse(){
+		//arrange
+		String response = "{\"response\":[5,6]}";
+		ArrayList<Long> expected_result = new ArrayList<Long>(Arrays.asList((long)2,(long)5,(long)6));
+
+		//act
+		VkResponseParser response_parser = new VkResponseParser();
+		ArrayList<Long> result = response_parser.parseFriend(response);
+
+		//assert
+		Assert.assertEquals(expected_result,result);
+
+
+	}
+
+
 }

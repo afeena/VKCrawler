@@ -50,6 +50,26 @@ public class VkResponseParser {
 		return posts_count;
 	}
 
+	public ArrayList<Long> parseFriend(String friend){
+		JSONObject jsonObj;
+		JSONArray response;
+		ArrayList<Long> parsed_friend=new ArrayList<Long>();
+
+
+
+		try {
+
+			jsonObj = (JSONObject) parser.parse(friend);
+			if(jsonObj.containsKey("error")) return null;
+			response = (JSONArray) jsonObj.get("response");
+			parsed_friend.addAll(response);
+		}
+		catch (org.json.simple.parser.ParseException e) {
+			System.out.println(e);
+		}
+		return parsed_friend;
+	}
+
 	public ArrayList<String> parseWall(String wall, long count){
 		JSONObject jsonObj;
 		JSONArray response;

@@ -9,7 +9,7 @@ import ru.afeena.crawler.wall.WallParser;
 public class Main {
 	public static void main(String[] args) throws Exception{
 
-		WallParser.init(1);
+		WallParser.init(4);
 		new Users();
 	}
 }

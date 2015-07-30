@@ -2,59 +2,78 @@ package ru.afeena.crawler.users;
 
 import ru.afeena.crawler.VkResponseParser;
 import ru.afeena.crawler.api.VkApi;
-import ru.afeena.crawler.exceptions.RequestAccessException;
 import ru.afeena.crawler.wall.WallTaskManager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class Users {
-	public static HashMap<Long, Integer> handled_users = new HashMap<Long, Integer>();
-	public static ConcurrentLinkedQueue<Long> unhandled_users = new ConcurrentLinkedQueue<Long>();
+public class Users implements Runnable {
+	private static ArrayList<Users> instances;
+	private HashSet<Integer> handledUsers;
+	private ConcurrentLinkedQueue<Integer> unhandledUsers;
+	private Thread thread;
+	private Integer startId;
 
-
-	public Users() {
-		WallTaskManager taskmanager = new WallTaskManager();
-		Thread thread = new Thread(taskmanager);
-		thread.start();
-
-
-		Users.unhandled_users.add(Long.parseLong("15595268"));
-
-		while (!Users.unhandled_users.isEmpty()) {
-			WallTaskManager.unhandled_users.addAll(Users.unhandled_users);
-			synchronized (taskmanager) {
-				taskmanager.notifyAll();
-			}
-			getFriend(Users.unhandled_users.poll());
+	public static void init(Integer... uids) throws Exception {
+		if (instances != null) throw new Exception("Instances already initialized");
+		instances = new ArrayList<>(uids.length);
+		for (Integer uid : uids) {
+			Users users = new Users(uid);
+			instances.add(users);
 		}
+	}
+
+	public Users(Integer startId) {
+		this.handledUsers = new HashSet<>();
+		this.unhandledUsers = new ConcurrentLinkedQueue<>();
+		this.startId = startId;
+		this.thread = new Thread(this);
+		this.thread.start();
 
 	}
 
-	public void getFriend(long uid) {
+	public void run() {
+
+		this.unhandledUsers.clear();
+		this.unhandledUsers.add(startId);
+
+		while (!this.unhandledUsers.isEmpty()) {
+			Integer currentUid = this.unhandledUsers.poll();
+			if (handledUsers.contains(currentUid))
+				continue;
+
+			WallTaskManager.getInstance().putIntoUnhandled(currentUid);
+			this.getFriend(currentUid);
+		}
+	}
+
+	private void getFriend(Integer uid) {
 
 		String friend = VkApi.getFriends(uid);
-		VkResponseParser friend_parser = new VkResponseParser();
-
-		ArrayList<Long> friend_uids=friend_parser.parseFriend(friend);
-
-		try {
-			if (friend_uids.equals(null)) throw new RequestAccessException(uid);
-
-			Iterator<Long> uids_iterator = friend_uids.iterator();
-			while (uids_iterator.hasNext()){
-				Long current = uids_iterator.next();
-				if(!Users.handled_users.containsKey(current)|| !Users.unhandled_users.contains(current))
-				Users.unhandled_users.add(current);
-			}
-
-		} catch (RequestAccessException e) {
-
+		if(friend==null) {
+			unhandledUsers.add(uid);
+			return;
 		}
+		VkResponseParser friendParser = new VkResponseParser();
+
+		ArrayList<Integer> friendUids = friendParser.parseFriend(friend);
+
+		if (friendUids == null) {
+			this.handledUsers.add(uid);
+			return;
+		}
+
+		for (Integer current : friendUids) {
+			if (this.handledUsers.contains(current))
+				continue;
+
+			this.unhandledUsers.add(current);
+		}
+
 	}
-
-
 }
+
+
+
 

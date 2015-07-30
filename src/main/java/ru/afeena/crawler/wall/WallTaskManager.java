@@ -3,80 +3,86 @@ package ru.afeena.crawler.wall;
 
 import ru.afeena.crawler.VkResponseParser;
 import ru.afeena.crawler.api.VkApi;
-import ru.afeena.crawler.exceptions.EmptyWallException;
-import ru.afeena.crawler.exceptions.RequestAccessException;
-import ru.afeena.crawler.users.Users;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class WallTaskManager implements Runnable {
 	private static final int MAX_POST_COUNT = 100;
-	public static ConcurrentLinkedQueue<Long> unhandled_users = new ConcurrentLinkedQueue<Long>();
+	private static final Integer ACCESS_DENIED = -1;
+	private static final Integer EMPTY_WALL = 0;
+	private Thread thread;
 
+	private static final WallTaskManager instance;
 
-	public WallTaskManager() {
+	static {
+		instance = new WallTaskManager();
 
+	}
 
+	private ConcurrentLinkedQueue<Integer> unhandledUsers;
+	private HashSet<Integer> handledUsers;
+
+	private WallTaskManager() {
+		unhandledUsers = new ConcurrentLinkedQueue<>();
+		handledUsers = new HashSet<>();
+		thread=new Thread(this);
+		thread.start();
+	}
+
+	public static WallTaskManager getInstance() {
+		return instance;
 	}
 
 	public synchronized void run() {
-		while (true) {
-			try {
+		try {
+			while (true) {
 				wait();
-			} catch (InterruptedException ignored) {
+				this.usersExecute();
 			}
-			usersExecute();
+		} catch (InterruptedException ignored) {
 		}
+	}
+
+	public synchronized void putIntoUnhandled(Integer uid) {
+		this.unhandledUsers.add(uid);
+		this.notify();
 	}
 
 	private void usersExecute() {
+		VkResponseParser parser = new VkResponseParser();
+		while (!unhandledUsers.isEmpty()) {
+			Integer uid = unhandledUsers.poll();
+			if (handledUsers.contains(uid))
+				continue;
 
-		while (!unhandled_users.isEmpty()) {
-			VkResponseParser parse = new VkResponseParser();
-			long uid = unhandled_users.poll();
 			String wall = VkApi.getWall(uid, 0, 1);
-			Long unread_post;
-			ArrayList<Long> offsets = new ArrayList<Long>();
-			Long posts_count = parse.postCount(wall);
+			ArrayList<Integer> offsets = new ArrayList<>();
+			Integer postsCount = parser.postCount(wall);
+			Integer unreadPost;
 
-			try {
-				if (posts_count.equals(-1)) throw new RequestAccessException(uid);
-				if (posts_count.equals(0)) throw new EmptyWallException(uid);
-
-
-				Users.handled_users.put(uid, posts_count.intValue());
-
-				unread_post = posts_count;
-
-				for (long i = 0; i < posts_count; i += 100) {
-					offsets.add(i);
-				}
-
-				for (int i = 0; i < offsets.size(); i++) {
-					if (unread_post > MAX_POST_COUNT) {
-						WallParser.addTask(new WallTask(uid, offsets.get(i), MAX_POST_COUNT));
-					} else {
-						WallParser.addTask(new WallTask(uid, offsets.get(i), unread_post.intValue()));
-
-					}
-
-					unread_post -= MAX_POST_COUNT;
-
-				}
-
-
-			} catch (EmptyWallException e) {
-				Users.handled_users.put(uid, 0);
-			} catch (RequestAccessException e) {
-				WallTaskManager.unhandled_users.remove(e.getUser());
-			} catch (Exception e) {
-
-				System.out.println("WallTaskManager" + e);
+			if (postsCount.equals(ACCESS_DENIED) || postsCount.equals(EMPTY_WALL)) {
+				this.handledUsers.add(uid);
+				continue;
 			}
 
+			for (int i = 0; i < postsCount; i += 100) {
+				offsets.add(i);
+			}
 
+			unreadPost = postsCount;
+			for (Integer offset : offsets) {
+				if (unreadPost > MAX_POST_COUNT)
+					WallParser.addTask(new WallTask(uid, offset, MAX_POST_COUNT));
+				else
+					WallParser.addTask(new WallTask(uid, offset, unreadPost.intValue()));
+
+				unreadPost -= MAX_POST_COUNT;
+			}
 		}
 	}
+
+
 }

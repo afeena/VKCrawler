@@ -7,99 +7,112 @@ import ru.afeena.crawler.exceptions.ResponseError;
 import ru.afeena.crawler.wall.Post;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 
 
 public class VkResponseParser {
 	private JSONParser parser;
-	public VkResponseParser(){
+
+	public VkResponseParser() {
 		parser = new JSONParser();
 
 	}
 
 
-	public long postCount(String wall){
-		JSONObject jsonObj;
-		JSONArray response;
-		Long posts_count=new Long(0);
+	public int postCount(String wall) {
+		JSONArray responseBody;
+		int postsCount;
 
-		try {
+		responseBody = getResponseBody(wall);
+		if(responseBody==null) return -1;
 
-			jsonObj = (JSONObject) parser.parse(wall);
-			if (jsonObj.containsKey("error")) throw new ResponseError();
-			response = (JSONArray) jsonObj.get("response");
+		if (responseBody.size() == 1)
+			return 0;
 
-
-			if (response.size() == 1) return 0;
-
-			 posts_count = (Long) response.get(0);
+		postsCount = ((Long) responseBody.get(0)).intValue();
 
 
-		}
-		catch (org.json.simple.parser.ParseException e) {
-
-			System.out.println("WallTaskManager" + e);
-		}
-		catch (ResponseError e){
-			return -1;
-		}
-		return posts_count;
+		return postsCount;
 	}
 
-	public ArrayList<Long> parseFriend(String friend){
-		JSONObject jsonObj;
-		JSONArray response;
-		ArrayList<Long> parsed_friend=new ArrayList<Long>();
+	public ArrayList<Integer> parseFriend(String friend) {
+		JSONArray responseBody;
+		ArrayList<Integer> parsedFriendList = new ArrayList<>();
+
+		responseBody = getResponseBody(friend);
+		if (responseBody == null) return null;
 
 
-
-		try {
-
-			jsonObj = (JSONObject) parser.parse(friend);
-			if(jsonObj.containsKey("error")) return null;
-			response = (JSONArray) jsonObj.get("response");
-			parsed_friend.addAll(response);
+		for (Object aResponseBody : responseBody) {
+			parsedFriendList.add(((Long) aResponseBody).intValue());
 		}
-		catch (org.json.simple.parser.ParseException e) {
-			System.out.println(e);
-		}
-		return parsed_friend;
+
+		return parsedFriendList;
 	}
 
-	public ArrayList<Post> parseWall(String wall, long count){
-		JSONObject jsonObj;
-		JSONArray response;
-		ArrayList<Post> result=new ArrayList<Post>();
+	public ArrayList<Post> parseWall(String wall, int uid, int count) {
 
-		try {
+		JSONArray responseBody;
+		ArrayList<Post> parsedWallPostsResult = new ArrayList<>();
 
-			jsonObj = (JSONObject) parser.parse(wall);
-			response = (JSONArray) jsonObj.get("response");
+		responseBody = getResponseBody(wall);
 
-
-			for (int i = 1; i <= count; i++) {
-
-				JSONObject raw_post = (JSONObject) response.get(i);				
-				String searched_key;
-				String post_type = raw_post.get("post_type").toString();
-
-				if(post_type.equals("copy"))
-					searched_key="copy_text";
-				else
-					searched_key="text";
-
-				String text=raw_post.get(searched_key).toString();
-				long date=(Long)raw_post.get("date");
-
-				Post post = new Post(date,text);
-				result.add(post);
+		if (responseBody == null) return null;
 
 
+		for (int i = 1; i <= count; i++) {
+			JSONObject postData;
+
+			int id;
+			int date;
+
+			String postType;
+			String searchedKey;
+			String text;
+
+			postData = (JSONObject) responseBody.get(i);
+			postType = postData.get("post_type").toString();
+			id = ((Long)postData.get("id")).intValue();
+			date = ((Long)postData.get("date")).intValue();
+
+			if (postType.equals("copy"))
+				searchedKey = "copy_text";
+			else
+				searchedKey = "text";
+
+			if (postData.containsKey(searchedKey)) {
+				text = postData.get(searchedKey).toString();
+			} else {
+				text = "";
 			}
 
-		} catch (org.json.simple.parser.ParseException e) {
-			System.out.println(e);
+			Post post = new Post(id, uid, date, text, postType);
+			parsedWallPostsResult.add(post);
+
 		}
-		return result;
+		return parsedWallPostsResult;
+	}
+
+	private JSONArray getResponseBody(String vkEntity) {
+		JSONObject vkEntityParsedObject=new JSONObject();
+		JSONArray responseBody = new JSONArray();
+
+		try {
+			vkEntityParsedObject = (JSONObject) parser.parse(vkEntity);
+			if (vkEntityParsedObject.containsKey("error")) {
+				throw new ResponseError();
+			}
+			responseBody = (JSONArray) vkEntityParsedObject.get("response");
+
+		} catch (org.json.simple.parser.ParseException parseError) {
+			System.out.println(parseError);
+		}
+		catch (ResponseError responseError){
+			//JSONObject errorBody=(JSONObject) vkEntityParsedObject.get("error");
+			return null;
+
+		}
+
+		return responseBody;
 	}
 }

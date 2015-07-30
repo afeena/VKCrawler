@@ -2,6 +2,7 @@ package ru.afeena.crawler.wall;
 
 import ru.afeena.crawler.VkResponseParser;
 import ru.afeena.crawler.api.VkApi;
+import ru.afeena.crawler.storage.Database;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -10,64 +11,77 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class WallParser implements Runnable {
 
-	public static ArrayList<WallParser> instances;
-	public static AtomicInteger current_thread = new AtomicInteger(0);
-
+	private static ArrayList<WallParser> instances;
+	private static AtomicInteger currentThread = new AtomicInteger(0);
+	private Database database;
 	private ConcurrentLinkedQueue<WallTask> tasks;
 
-	public static void init(int thread_count) throws Exception {
+	public static void init(int threadCount) throws Exception {
 		if (instances != null) throw new Exception("Instances already initialized");
-		instances = new ArrayList<WallParser>(thread_count);
-		for (int i = 0; i < thread_count; i++) {
-			WallParser wall_parser = new WallParser();
-			Thread thread = new Thread(wall_parser);
+		instances = new ArrayList<>(threadCount);
+		for (int i = 0; i < threadCount; i++) {
+			WallParser wallParser = new WallParser();
+			Thread thread = new Thread(wallParser);
 			thread.start();
-			instances.add(wall_parser);
+			instances.add(wallParser);
 		}
 
 	}
 
 	public static void addTask(WallTask task) {
-		int thread = current_thread.addAndGet(1) % instances.size();
-		WallParser current_parser = instances.get(thread);
-		current_parser.tasks.add(task);
-		synchronized (current_parser) {
-			current_parser.notify();
-		}
+		int thread = currentThread.addAndGet(1) % instances.size();
+		WallParser currentParser = instances.get(thread);
+		currentParser.put(task);
+
+	}
+
+	private synchronized void put(WallTask task) {
+		this.tasks.add(task);
+		this.notify();
 
 	}
 
 	private WallParser() {
 
-		tasks = new ConcurrentLinkedQueue<WallTask>();
+		database = new Database();
+		tasks = new ConcurrentLinkedQueue<>();
 
 	}
 
 	public synchronized void run() {
-
-		while (true) {
-			try {
+		try {
+			while (true) {
 				wait();
-			} catch (InterruptedException ignored) {
-
+				this.writeWallPostsToDB();
 			}
-			while (!tasks.isEmpty()) {
-				WallTask task = tasks.poll();
 
-				String wall = VkApi.getWall(task.getUid(), task.getOffset(), task.getCount());
-
-				VkResponseParser parse = new VkResponseParser();
-				ArrayList<Post> res = parse.parseWall(wall, task.getCount());
-
-//				for (String elem : res) {
-//					System.out.println(elem);
-//				}
-
-			}
+		} catch (InterruptedException ignored) {
 		}
+
 
 	}
 
+	private void writeWallPostsToDB() {
+		while (!tasks.isEmpty()) {
+			WallTask task = tasks.poll();
+
+			String wall = VkApi.getWall(task.getUid(), task.getOffset(), task.getCount());
+
+			if (wall == null) {
+				tasks.add(task);
+				continue;
+			}
+
+			VkResponseParser parser = new VkResponseParser();
+			ArrayList<Post> parsedPostsResultList = parser.parseWall(wall, task.getUid(), task.getCount());
+			database.insertPostCollection(parsedPostsResultList);
+
+
+		}
+	}
 
 }
+
+
+
 

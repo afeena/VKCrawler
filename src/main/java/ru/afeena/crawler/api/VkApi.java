@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -63,9 +64,8 @@ public class VkApi {
 
 	private static String connect(String method_name, Map params) {
 		Set<String> keys = params.keySet();
-		String parametres = new String();
-		for (Iterator<String> it = keys.iterator(); it.hasNext(); ) {
-			String key = it.next();
+		String parametres=new String();
+		for (String key : keys) {
 			Object parameter = params.get(key);
 			parametres += "&" + key + "=" + parameter.toString();
 
@@ -82,6 +82,9 @@ public class VkApi {
 			URL url = new URL(url_string);
 			connection = (HttpURLConnection) url.openConnection();
 
+			if (connection.getResponseCode() != 200)
+				throw new IOException("WAWAW");
+
 			input = connection.getInputStream();
 			content_size = connection.getContentLength();
 			byte[] result = new byte[content_size];
@@ -95,11 +98,10 @@ public class VkApi {
 			return new String(result, StandardCharsets.UTF_8);
 
 
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
+		}
+		finally {
 			if (null != connection) {
 				connection.disconnect();
 			}

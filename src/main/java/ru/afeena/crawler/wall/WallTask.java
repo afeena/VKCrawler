@@ -1,25 +1,25 @@
 package ru.afeena.crawler.wall;
 
 public class WallTask {
-	private long uid;
+	private int uid;
 	private int count;
-	private long offset;
+	private int offset;
 
-	public WallTask(long uid, long offset, int count) {
+	public WallTask(int uid, int offset, int count) {
 		this.uid = uid;
 		this.offset = offset;
 		this.count = count;
 	}
 
-	public long getUid() {
+	public int getUid() {
 		return this.uid;
 	}
 
-	public long getCount() {
+	public int getCount() {
 		return this.count;
 	}
 
-	public long getOffset() {
+	public int getOffset() {
 		return this.offset;
 	}
 

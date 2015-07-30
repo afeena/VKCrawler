@@ -4,31 +4,44 @@ package ru.afeena.crawler.wall;
  * Created by mainn_000 on 24.07.2015.
  */
 public class Post {
-	long date;
-	String text;
-	public Post(long date, String text){
-		this.date =date;
-		this.text=text;
+	private int id;
+	private int uid;
+	private int date;
+
+
+	private String text;
+	private String type;
+
+	public Post(int id,int uid, int date, String text, String type) {
+		this.id=id;
+		this.uid = uid;
+		this.date = date;
+		this.text = text;
+		this.type = type;
 	}
 
-	public void setDate(long value){
-		this.date =value;
+	public int getId(){
+		return this.id;
 	}
-
-	public void setText(String value){
-		this.text=value;
+	public int getUid(){
+		return this.uid;
 	}
+	public int getDate() {
 
-	public String getText(){
+		return this.date;
+	}
+	public String getText() {
+
 		return this.text;
 	}
-	public long getDate(){
-		return this.date;
+
+	public String getType() {
+		return this.type;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		Post post = (Post) obj;
-		return this.text.equals(post.text)&&this.date==post.date;
+		return this.text.equals(post.text) && this.date == post.date;
 	}
 }

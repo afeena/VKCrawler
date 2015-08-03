@@ -8,13 +8,8 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 
 
-		WallParser.init(1);
-		Users.init(15595268);
-//		WallTaskManager taskmanager = WallTaskManager.getInstance();
-//		Thread thread = new Thread(taskmanager);
-//		thread.start();
+		WallParser.init(8);
+		Users.init(15595268,1);
 
-
-//		Thread.sleep(Long.MAX_VALUE);
 	}
 }

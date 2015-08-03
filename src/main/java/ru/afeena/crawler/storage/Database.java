@@ -28,6 +28,7 @@ public class Database {
 		UpdateOptions updateOptions = new UpdateOptions();
 		updateOptions.upsert(true);
 
+		if(posts==null) return;
 		for (Post post : posts) {
 			Document postDocument = new Document();
 			postDocument.put("title", "Post");
